@@ -2,5 +2,6 @@
 
 int main(void)
 {
-	printf("%%%d");
+	char d[] = "hello";
+	printf("%c\n", d);
 }
