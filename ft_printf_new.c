@@ -1,4 +1,6 @@
-
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdarg.h>
 
 int	ft_strlen(char *str)
 {
@@ -90,11 +92,11 @@ void putnbr_recurse(char *ret, int nb)
 {
 	if (nb > 9)
 	{
-		putnbr_recurse(nb / 10);
-		putnbr_recurse(nb % 10);
+		putnbr_recurse(ret, nb / 10);
+		putnbr_recurse(ret, nb % 10);
 	}
 	else
-		charjoin('0' + nb);
+		charjoin(ret, '0' + nb);
 }
 
 char *putnbr(int nb)
@@ -116,12 +118,11 @@ void	convert_base_hex_recurse(char *ret, int nbr)
 	base = "0123456789abcdef";
 	if (nbr > 15)
 	{
-		convert_base_hex_recurse(nbr / 16);
+		convert_base_hex_recurse(ret, nbr / 16);
 		charjoin(ret, base[nbr % 16]);
 	}
 	else
 		charjoin(ret, base[nbr]);
-	return (ret);
 }
 
 void	convert_base_hex(int nbr)
@@ -129,8 +130,7 @@ void	convert_base_hex(int nbr)
 	char *ret;
 
 	ret = "";
-	convert_base_hex_recurse(ret, nb);
-	return (ret);
+	convert_base_hex_recurse(ret, nbr);
 }
 
 void	convert_base_hex_cap_recurse(char *ret, int nbr)
@@ -140,12 +140,11 @@ void	convert_base_hex_cap_recurse(char *ret, int nbr)
 	base = "0123456789ABCDEF";
 	if (nbr > 15)
 	{
-		convert_base_hex_cap_recurse(nbr / 16);
+		convert_base_hex_cap_recurse(ret, nbr / 16);
 		charjoin(ret, base[nbr % 16]);
 	}
 	else
 		charjoin(ret, base[nbr]);
-	return (ret);
 }
 
 void	convert_base_hex_cap(int nbr)
@@ -153,8 +152,73 @@ void	convert_base_hex_cap(int nbr)
 	char *ret;
 
 	ret = "";
-	convert_base_hex_cap_recurse(ret, nb);
-	return (ret);
+	convert_base_hex_cap_recurse(ret, nbr);
+}
+
+int	check_size_ahead(char *str, int i)
+{
+	int	j;
+
+	j = 0;
+	while (str[i + j] <= '9' && str[i + j] >= '0')
+	{
+		j++;
+	}
+	return (j);
+}
+
+int	ten_power(int exp)
+{
+	if (exp == 0)
+		return (1);
+	return (10 * ten_power(exp - 1));
+}
+
+int	convert_to_int(char *str, int i, int size)
+{
+	int	result;
+	int	j;
+
+	result = 0;
+	j = 1;
+	while (j <= size)
+	{
+		result += ((str[i] - '0') * ten_power(size - j));
+		i++;
+		j++;
+	}
+	return (result);
+}
+
+int	ft_atoi(char *str, int i)
+{
+	int	multiply;
+	int	size;
+
+	if (!str)
+		return (0);
+	multiply = 1;
+	if (str[i] == '-')
+	{
+		multiply *= -1;
+		i++;
+	}
+	size = check_size_ahead(str, i);
+	return (multiply * convert_to_int(str, i, size));
+}
+
+int	ft_atoi_positive(char *str, int i)
+{
+	int	multiply;
+	int	size;
+
+	if (!str)
+		return (0);
+	multiply = 1;
+	if (str[i] == '-')
+		return (-1);
+	size = check_size_ahead(str, i);
+	return (multiply * convert_to_int(str, i, size));
 }
 
 char *space_add_right(char *str)
@@ -233,7 +297,7 @@ int is_conversion(char c)
 
 // }
 
-void reset_flags(int *flags[])
+void reset_flags(int *flags)
 {
 	int i;
 
@@ -245,23 +309,74 @@ void reset_flags(int *flags[])
 	}
 }
 
-void parse_flags(int *flags[], const char *format, int i)
+void parse_flags(int *flags, const char *format, int i)
 {
-	while (format[i] == '0') //use atoi
+	int temp;
+
+	if (format[i] == '0')
 	{
+		while (format[i] == '0')
+			i++;
 		flags[0] = 1;
-		i++;
 	}
-	while (is_flag(format[i]))
+	if (format[i] == '*')
 	{
-		if (format[i] == '.') //atoi or default
-			flags[1] = 1;
-		if (format[i] == '-') //atoi
+		temp = va_arg(list, int);
+		if (temp < 0)
+		{
 			flags[2] = 1;
-		// if (format[i] == '*') //normal atoi on va_arg //HANDLE FIELD WIDTH
-		// 	flags[3] = 1;
+			temp *= -1;
+		}
+		flags[3] = temp;
 		i++;
 	}
+	else
+	{
+		while (format[i] == '-')
+		{
+			flags[2] = 1;
+			i++;
+		}
+		flags[3] = ft_atoi(format, i);
+		while (format[i] >= '0' && format[i] <= '9')
+			i++;
+	}
+	if (format[i] == '.')
+	{
+		flags[1] = 0;
+		i++;
+		if (format[i] == '*')
+		{
+			flags[1] = va_arg(list, int);
+			i++;
+		}
+		else
+		{
+			flags[1] = ft_atoi(format, i);
+			while (format[i] >= '0' && format[i] <= '9')
+			i++;
+		}
+		if (flags[1] < 0)
+			flags[1] = -1;
+	}
+	if (!is_conversion(format[i]))
+		flags[4] = 1;
+
+	// while (format[i] == '0') //use atoi
+	// {
+	// 	flags[0] = 1;
+	// 	i++;
+	// }
+	// while (is_flag(format[i]))
+	// {
+	// 	if (format[i] == '.') //atoi or default
+	// 		flags[1] = 1;
+	// 	if (format[i] == '-') //atoi
+	// 		flags[2] = 1;
+	// 	// if (format[i] == '*') //normal atoi on va_arg //HANDLE FIELD WIDTH
+	// 	// 	flags[3] = 1;
+	// 	i++;
+	// }
 }
 
 char *unsigned_int_conversions(char *format, int j, va_list list)
@@ -279,7 +394,7 @@ char *unsigned_int_conversions(char *format, int j, va_list list)
 		return (convert_base_hex_cap(i));
 }
 
-char *convert_to_string(char *format, int j, va_list list, int *flags[]) //int flags[] ?
+char *convert_to_string(char *format, int j, va_list list, int *flags) //int flags[] ?
 {
 	if (format[j] == 'c' || format[j] == 'u' || format[j] == 'x' || format[j] == 'X')
 		return (unsigned_int_conversions(format, j, list));
@@ -293,7 +408,7 @@ char *convert_to_string(char *format, int j, va_list list, int *flags[]) //int f
 		return //////////////////////////////////////////////////////
 }
 
-char *apply_flags(char *str, int *flags[], char conversion)
+char *apply_flags(char *str, int *flags, char conversion)
 {
 	int prec;
 	int fw;
@@ -330,7 +445,7 @@ char *apply_flags(char *str, int *flags[], char conversion)
 	}
 }
 
-char *produce_string(int *flags[], char *format, int i, va_list list)
+char *produce_string(int *flags, char *format, int i, va_list list)
 {
 	int j;
 	char *str;
@@ -360,7 +475,7 @@ int ft_printf(const char *format, ... )
 	va_list list;
 	int i;
 	char	*ret;
-	int *flags[5];
+	int flags[5];
 	int len_before;
 
 	va_start(list, format);
@@ -395,6 +510,8 @@ int ft_printf(const char *format, ... )
 		}
 	}
 	ft_putstr(ret);
+	i = ft_strlen(ret);
+	va_end(list);
 	free(ret); //?
-	return (ft_strlen(ret));
+	return (i);
 }
