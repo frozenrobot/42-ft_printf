@@ -14,6 +14,23 @@ int	ft_strlen(char *str)
 	return (i);
 }
 
+void ft_putchar(char c)
+{
+	write (1, &c, 1);
+}
+
+void ft_putstr(char *str)
+{
+	int i;
+
+    i = 0;
+	while (str[i] != '\0')
+	{
+		ft_putchar(str[i]);
+		i++;
+	}
+}
+
 void	*ft_memmove(void *dest, const void *src, int n)
 {
 	int	i;
@@ -55,7 +72,8 @@ char	*strjoin(char *s1, char *s2)
 	ft_memmove(both, s1, ft_strlen(s1));
 	ft_memmove(both + ft_strlen(s1), s2, ft_strlen(s2));
 	both[size - 1] = '\0';
-	free(s1);
+// 	free(s1);
+// 	free(s2);
 	return (both);
 }
 
@@ -73,7 +91,7 @@ char *charjoin(char *str, char c)
 	ft_memmove(both, str, ft_strlen(str));
 	both[size - 2] = c;
 	both[size - 1] = '\0';
-	free(str);
+// 	free(str);
 	return (both);
 }
 
@@ -82,7 +100,7 @@ int	check_negative(char *ret, int nb)
 {
 	if (nb < 0)
 	{
-		charjoin(ret, '-');
+		ret = charjoin(ret, '-');
 		nb = -nb;
 	}
 	return (nb);
@@ -96,7 +114,7 @@ void putnbr_recurse(char *ret, int nb)
 		putnbr_recurse(ret, nb % 10);
 	}
 	else
-		charjoin(ret, '0' + nb);
+		ret = charjoin(ret, '0' + nb);
 }
 
 char *putnbr(int nb)
@@ -105,6 +123,8 @@ char *putnbr(int nb)
 
 	if (nb == -2147483648)
 		return ("-2147483648");
+	else if (nb == 0)
+	    return ("0");
 	ret = "";
 	nb = check_negative(ret, nb);
 	putnbr_recurse(ret, nb);
@@ -119,18 +139,19 @@ void	convert_base_hex_recurse(char *ret, int nbr)
 	if (nbr > 15)
 	{
 		convert_base_hex_recurse(ret, nbr / 16);
-		charjoin(ret, base[nbr % 16]);
+		ret = charjoin(ret, base[nbr % 16]);
 	}
 	else
-		charjoin(ret, base[nbr]);
+		ret = charjoin(ret, base[nbr]);
 }
 
-void	convert_base_hex(int nbr)
+char *convert_base_hex(int nbr)
 {
 	char *ret;
 
 	ret = "";
 	convert_base_hex_recurse(ret, nbr);
+	return (ret);
 }
 
 void	convert_base_hex_cap_recurse(char *ret, int nbr)
@@ -141,18 +162,19 @@ void	convert_base_hex_cap_recurse(char *ret, int nbr)
 	if (nbr > 15)
 	{
 		convert_base_hex_cap_recurse(ret, nbr / 16);
-		charjoin(ret, base[nbr % 16]);
+		ret = charjoin(ret, base[nbr % 16]);
 	}
 	else
-		charjoin(ret, base[nbr]);
+		ret = charjoin(ret, base[nbr]);
 }
 
-void	convert_base_hex_cap(int nbr)
+char *convert_base_hex_cap(int nbr)
 {
 	char *ret;
 
 	ret = "";
 	convert_base_hex_cap_recurse(ret, nbr);
+	return (ret);
 }
 
 int	check_size_ahead(char *str, int i)
@@ -223,7 +245,8 @@ int	ft_atoi_positive(char *str, int i)
 
 char *space_add_right(char *str)
 {
-	charjoin(str, ' ');
+	str = charjoin(str, ' ');
+	return (str);
 }
 
 char *space_add_left(char *str)
@@ -240,7 +263,7 @@ char *space_add_left(char *str)
 	both[0] = ' ';
 	ft_memmove(both + 1, str, ft_strlen(str));
 	both[size - 1] = '\0';
-	free(str);
+// 	free(str);
 	return (both);
 }
 
@@ -258,7 +281,7 @@ char *zero_add_left(char *str)
 	both[0] = '0';
 	ft_memmove(both + 1, str, ft_strlen(str));
 	both[size - 1] = '\0';
-	free(str);
+// 	free(str);
 	return (both);
 }
 
@@ -272,8 +295,8 @@ char *strtrim(char *str, int size)
 	if (!both)
 		return (NULL);
 	ft_memmove(both, str, size);
-	both[size - 1] = '\0';
-	free(str);
+	both[size] = '\0';
+// 	free(str);
 	return (both);
 }
 
@@ -309,7 +332,7 @@ void reset_flags(int *flags)
 	}
 }
 
-void parse_flags(int *flags, const char *format, int i)
+void parse_flags(int *flags, char *format, int i, va_list list)
 {
 	int temp;
 
@@ -392,9 +415,11 @@ char *unsigned_int_conversions(char *format, int j, va_list list)
 		return (convert_base_hex(i));
 	else if (format[j] == 'X')
 		return (convert_base_hex_cap(i));
+	else
+		return ("ERROR");
 }
 
-char *convert_to_string(char *format, int j, va_list list, int *flags) //int flags[] ?
+char *convert_to_string(char *format, int j, va_list list) //int flags[] ?
 {
 	if (format[j] == 'c' || format[j] == 'u' || format[j] == 'x' || format[j] == 'X')
 		return (unsigned_int_conversions(format, j, list));
@@ -405,7 +430,9 @@ char *convert_to_string(char *format, int j, va_list list, int *flags) //int fla
 	else if (format[j] == '%')
 		return (charjoin("", '%'));
 	else if (format[j] == 'p')
-		return //////////////////////////////////////////////////////
+		return ("ERROR");//////////////////////////////////////////////////////
+	else
+		return ("ERROR");
 }
 
 char *apply_flags(char *str, int *flags, char conversion)
@@ -425,24 +452,25 @@ char *apply_flags(char *str, int *flags, char conversion)
 		|| conversion == 'u' || conversion == 'x' || conversion == 'X'))
 	{
 		while (ft_strlen(str) < zero)
-			zero_add_left(str);
+			str = zero_add_left(str);
 	}
 	else if (prec != -1 && (conversion == 'd' || conversion == 'i'
 			|| conversion == 'u' || conversion == 'x' || conversion == 'X'))
 	{
 		while (ft_strlen(str) < prec)
-			zero_add_left(str);
+			str = zero_add_left(str);
 	}
 	if (left == -1 && fw != -1)
 	{
 		while (ft_strlen(str) < fw)
-			space_add_left(str);
+			str = space_add_left(str);
 	}
-	else if (left == 1 && fw != -1)
+	if (left == 1 && fw != -1)
 	{
 		while (ft_strlen(str) < fw)
-			space_add_right(str);
+			str = space_add_right(str);
 	}
+	return (str);
 }
 
 char *produce_string(int *flags, char *format, int i, va_list list)
@@ -462,7 +490,7 @@ char *produce_string(int *flags, char *format, int i, va_list list)
 	if (is_conversion(format[j]))
 	{
 		conversion = format[j];
-		str = convert_to_string(format, j, list, flags);
+		str = convert_to_string(format, j, list);
 	}
 	if (ft_strlen(str) == 0)
 		return ("");
@@ -472,38 +500,39 @@ char *produce_string(int *flags, char *format, int i, va_list list)
 
 int ft_printf(const char *format, ... )
 {
-	va_list list;
 	int i;
 	char	*ret;
 	int flags[5];
 	int len_before;
+	char *format_copy;
+	va_list list;
 
+	format_copy = (char *)format;
 	va_start(list, format);
 	i = 0;
 	ret = "";
-	while (format[i] != '\0')
+	while (format_copy[i] != '\0')
 	{
-		while (format[i] != '%')
+		while (format_copy[i] != '%' && format_copy[i] != '\0')
 		{
-			charjoin(ret, format[i]);
+			ret = charjoin(ret, format_copy[i]);
 			i++;
 		}
-		if (format[i] == '%')
+		if (format_copy[i] == '%')
 		{
+		    i++;
 			reset_flags(flags);
-			parse_flags(flags, format, i + 1);
+			parse_flags(flags, format_copy, i, list);
 			len_before = ft_strlen(ret);
-			strjoin(ret, produce_string(flags, format, i + 1, list));
+			ret = strjoin(ret, produce_string(flags, format_copy, i, list));
 			if (len_before == ft_strlen(ret))
 			{
-				charjoin(ret, '%');
+				ret = charjoin(ret, '%');
 				i++;
 			}
 			else
 			{
-				while (format[i] == '0')
-					i++;
-				while (is_flag(format[i]))
+				while (is_flag(format_copy[i]) || (format_copy[i] >= '0' && format_copy[i] <= '9'))
 					i++;
 				i++;
 			}
@@ -512,6 +541,13 @@ int ft_printf(const char *format, ... )
 	ft_putstr(ret);
 	i = ft_strlen(ret);
 	va_end(list);
-	free(ret); //?
+// 	free(ret); //?
 	return (i);
+}
+
+int main(void)
+{
+	// char p[] = "banananana";
+	ft_printf("%10.2i12345\n", 9000);
+	// printf("%0000-00s24ksss%.4iii%ddd%04i\n%.8x", "hello", 20, 30, 500, 12345);
 }
