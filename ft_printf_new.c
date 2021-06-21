@@ -14,6 +14,13 @@ int	ft_strlen(char *str)
 	return (i);
 }
 
+long mod(long nb)
+{
+	if (nb < 0)
+		nb *= -1;
+	return (nb);
+}
+
 void ft_putchar(char c)
 {
 	write (1, &c, 1);
@@ -106,15 +113,16 @@ int	check_negative(char *ret, int nb)
 	return (nb);
 }
 
-void putnbr_recurse(char *ret, int nb)
+char *putnbr_recurse(char *ret, int nb)
 {
 	if (nb > 9)
 	{
-		putnbr_recurse(ret, nb / 10);
-		putnbr_recurse(ret, nb % 10);
+		ret = putnbr_recurse(ret, nb / 10);
+		ret = putnbr_recurse(ret, nb % 10);
 	}
 	else
 		ret = charjoin(ret, '0' + nb);
+	return (ret);
 }
 
 char *putnbr(int nb)
@@ -127,22 +135,23 @@ char *putnbr(int nb)
 	    return ("0");
 	ret = "";
 	nb = check_negative(ret, nb);
-	putnbr_recurse(ret, nb);
+	ret = putnbr_recurse(ret, nb);
 	return (ret);
 }
 
-void	convert_base_hex_recurse(char *ret, int nbr)
+char *convert_base_hex_recurse(char *ret, int nbr)
 {
 	char *base;
 
 	base = "0123456789abcdef";
 	if (nbr > 15)
 	{
-		convert_base_hex_recurse(ret, nbr / 16);
+		ret = convert_base_hex_recurse(ret, nbr / 16);
 		ret = charjoin(ret, base[nbr % 16]);
 	}
 	else
 		ret = charjoin(ret, base[nbr]);
+	return (ret);
 }
 
 char *convert_base_hex(int nbr)
@@ -150,22 +159,47 @@ char *convert_base_hex(int nbr)
 	char *ret;
 
 	ret = "";
-	convert_base_hex_recurse(ret, nbr);
+	ret = convert_base_hex_recurse(ret, nbr);
 	return (ret);
 }
 
-void	convert_base_hex_cap_recurse(char *ret, int nbr)
+char *convert_base_hex_long_recurse(char *ret, unsigned long nbr)
+{
+	char *base;
+
+	base = "0123456789abcdef";
+	if (nbr > 15)
+	{
+		ret = convert_base_hex_long_recurse(ret, nbr / 16);
+		ret = charjoin(ret, base[nbr % 16]);
+	}
+	else
+		ret = charjoin(ret, base[nbr]);
+	return (ret);
+}
+
+char *convert_base_hex_long(unsigned long nbr)
+{
+	char *ret;
+
+	ret = "";
+	ret = convert_base_hex_long_recurse(ret, nbr);
+	return (ret);
+}
+
+char *convert_base_hex_cap_recurse(char *ret, int nbr)
 {
 	char *base;
 
 	base = "0123456789ABCDEF";
 	if (nbr > 15)
 	{
-		convert_base_hex_cap_recurse(ret, nbr / 16);
+		ret = convert_base_hex_cap_recurse(ret, nbr / 16);
 		ret = charjoin(ret, base[nbr % 16]);
 	}
 	else
 		ret = charjoin(ret, base[nbr]);
+	return (ret);
 }
 
 char *convert_base_hex_cap(int nbr)
@@ -173,7 +207,7 @@ char *convert_base_hex_cap(int nbr)
 	char *ret;
 
 	ret = "";
-	convert_base_hex_cap_recurse(ret, nbr);
+	ret = convert_base_hex_cap_recurse(ret, nbr);
 	return (ret);
 }
 
@@ -360,9 +394,23 @@ void parse_flags(int *flags, char *format, int i, va_list list)
 			flags[2] = 1;
 			i++;
 		}
-		flags[3] = ft_atoi(format, i);
-		while (format[i] >= '0' && format[i] <= '9')
+		if (format[i] == '*')
+		{
+			temp = va_arg(list, int);
+			if (temp < 0)
+			{
+				temp *= -1;
+				flags[2] = -1;
+			}
+			flags[3] = temp;
 			i++;
+		}
+		else
+		{
+			flags[3] = ft_atoi(format, i);
+			while (format[i] >= '0' && format[i] <= '9')
+				i++;
+		}
 	}
 	if (format[i] == '.')
 	{
@@ -375,9 +423,31 @@ void parse_flags(int *flags, char *format, int i, va_list list)
 		}
 		else
 		{
-			flags[1] = ft_atoi(format, i);
-			while (format[i] >= '0' && format[i] <= '9')
-			i++;
+			if (format[i] == '-')
+			{
+				i++;
+				if (format[i] == '*')
+				{
+					temp = va_arg(list, int);
+						flags[1] = temp * -1;
+					i++;
+				}
+				else
+				{
+					while (format[i] == '-')
+						i++;
+					flags[1] = -1 * ft_atoi(format, i);
+					while (format[i] >= '0' && format[i] <= '9')
+						i++;
+				}
+			}
+			else
+			{
+				flags[1] = ft_atoi(format, i);
+				while (format[i] >= '0' && format[i] <= '9')
+					i++;
+			}
+
 		}
 		if (flags[1] < 0)
 			flags[1] = -1;
@@ -430,7 +500,7 @@ char *convert_to_string(char *format, int j, va_list list) //int flags[] ?
 	else if (format[j] == '%')
 		return (charjoin("", '%'));
 	else if (format[j] == 'p')
-		return ("ERROR");//////////////////////////////////////////////////////
+		return (strjoin("0x", convert_base_hex_long((unsigned long)va_arg(list, unsigned long))));//////////////////////////////////////////////////////
 	else
 		return ("ERROR");
 }
@@ -545,9 +615,11 @@ int ft_printf(const char *format, ... )
 	return (i);
 }
 
+#include <stdio.h>
 int main(void)
 {
-	// char p[] = "banananana";
-	ft_printf("%10.2i12345\n", 9000);
+	char p[] = "banananana";
+	ft_printf("%10p\n", NULL);
+	printf("%10p\n", NULL);
 	// printf("%0000-00s24ksss%.4iii%ddd%04i\n%.8x", "hello", 20, 30, 500, 12345);
 }
