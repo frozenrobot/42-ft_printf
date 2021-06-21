@@ -84,25 +84,6 @@ char	*strjoin(char *s1, char *s2)
 	return (both);
 }
 
-char	*strjoin_frees1(char *s1, char *s2)
-{
-	int		size;
-	char	*both;
-
-	if (!s1 && !s2)
-		return (NULL);
-	size = ft_strlen(s1) + ft_strlen(s2) + 1;
-	both = malloc((size) * sizeof(char));
-	if (!both)
-		return (NULL);
-	ft_memmove(both, s1, ft_strlen(s1));
-	ft_memmove(both + ft_strlen(s1), s2, ft_strlen(s2));
-	both[size - 1] = '\0';
-	free(s1);
-	free(s2);
-	return (both);
-}
-
 char *charjoin(char *str, char c)
 {
 	int		size;
@@ -115,8 +96,8 @@ char *charjoin(char *str, char c)
 	ft_memmove(both, str, ft_strlen(str));
 	both[size - 2] = c;
 	both[size - 1] = '\0';
-	// if (str[0] != '\0')
-	free(str);
+	if (str[0] != '\0')
+		free(str);
 	return (both);
 }
 
@@ -151,8 +132,7 @@ char *putnbr(int nb)
 		return ("-2147483648");
 	else if (nb == 0)
 	    return ("0");
-	ret = malloc(sizeof(char));
-	ret[0] = '\0';
+	ret = "";
 	nb = check_negative(ret, nb);
 	ret = putnbr_recurse(ret, nb);
 	return (ret);
@@ -177,8 +157,7 @@ char *convert_base_hex(int nbr)
 {
 	char *ret;
 
-	ret = malloc(sizeof(char));
-	ret[0] = '\0';
+	ret = "";
 	ret = convert_base_hex_recurse(ret, nbr);
 	return (ret);
 }
@@ -202,8 +181,7 @@ char *convert_base_hex_long(unsigned long nbr)
 {
 	char *ret;
 
-	ret = malloc(sizeof(char));
-	ret[0] = '\0';
+	ret = "";
 	ret = convert_base_hex_long_recurse(ret, nbr);
 	return (ret);
 }
@@ -227,8 +205,7 @@ char *convert_base_hex_cap(int nbr)
 {
 	char *ret;
 
-	ret = malloc(sizeof(char));
-	ret[0] = '\0';
+	ret = "";
 	ret = convert_base_hex_cap_recurse(ret, nbr);
 	return (ret);
 }
@@ -604,9 +581,9 @@ int ft_printf(const char *format, ... )
 	format_copy = (char *)format;
 	va_start(list, format);
 	i = 0;
-	ret = malloc(sizeof(char));
-	ret[0] = '\0';
-	// ret = "";
+	// ret = malloc(sizeof(char));
+	// ret[0] = '\0';
+	ret = "";
 	while (format_copy[i] != '\0')
 	{
 		while (format_copy[i] != '%' && format_copy[i] != '\0')
@@ -620,7 +597,7 @@ int ft_printf(const char *format, ... )
 			reset_flags(flags);
 			parse_flags(flags, format_copy, i, list);
 			len_before = ft_strlen(ret);
-			ret = strjoin_frees1(ret, produce_string(flags, format_copy, i, list));
+			ret = strjoin(ret, produce_string(flags, format_copy, i, list));
 			if (len_before == ft_strlen(ret))
 			{
 				ret = charjoin(ret, '%');
@@ -645,8 +622,7 @@ int ft_printf(const char *format, ... )
 int main(void)
 {
 	// char p[] = "banananana";
-	// ft_printf("hel%10.3s\n", "hello");
-	ft_printf("%.4i\n", 20);
+	// ft_printf("%.4i\n", 20);
 	// printf("%.2p\n", NULL);
 	ft_printf("%0000-00s24ksss%.4iii%ddd%04i\n%.8x", "hello", 20, 30, 500, 12345);
 }
